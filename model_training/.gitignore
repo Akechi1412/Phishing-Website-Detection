@@ -163,3 +163,7 @@ cython_debug/
 
 # Testing
 test.py
+
+# Lagrge folder and files
+phishing_data.parquet
+legitimate_data.partquet
