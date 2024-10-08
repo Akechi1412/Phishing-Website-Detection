@@ -1,23 +1,15 @@
-"""
-File: utils.py
-Description: This script includes utility functions for computation or data loading.
-Author: Phong Nguyen
-Date: October 8, 2024
-"""
-
-import requests as rq
+import asyncio
+import aiohttp
 import pandas as pd
-import multiprocessing as mp
+import pyarrow as pa
+import pyarrow.parquet as pq
 
-def fetch_url_data(url):
+async def fetch_url_data(session, url):
     """
-    Fetches HTML content from the given URL.
+    Asynchronously fetches HTML content from the given URL using aiohttp.
 
-    This function sends an HTTP GET request to the provided URL and retrieves the HTML content 
-    if the request is successful (status code 200). If the request fails or if any exception 
-    occurs during the request, it returns None.
-
-    Args:
+    Parameters:
+        session (aiohttp.ClientSession): The aiohttp session to use for making the request.
         url (str): The URL from which to fetch the HTML content.
 
     Returns:
@@ -25,61 +17,60 @@ def fetch_url_data(url):
         None: If the request fails or the URL is not accessible.
     """
     try:
-        response = rq.get(url, timeout=5)
-        if response.status_code == 200:
-            return {'url': url, 'html': response.text}
-        else:
-            return None
+        url = url.strip()
+        if not url.startswith('http'):
+            url = 'http://' + url
+        async with session.get(url, timeout=20) as response:
+            if response.status == 200:
+                html = await response.text()
+                return {'url': str(response.url), 'html': html}
     except Exception as e:
         return None
 
-
-def update_progress(result, progress, accessible_data):
+async def build_dataset(url_list, batch_size=1000, size=-1, filename='url_html_data.parquet'):
     """
-    Updates the progress of URL processing and stores accessible URL data.
+    Asynchronously fetches HTML content from a list of URLs and writes the data to a Parquet file in batches.
 
-    This function increments the total number of processed URLs and updates the list of accessible URLs 
-    if the result is valid (not None). It also prints the progress every 100 URLs processed.
-
-    Args:
-        result (dict or None): The result of the URL processing. Contains 'url' and 'html' if successful, otherwise None.
-        progress (list): A shared list to track progress. Index 0 tracks total processed URLs, 
-                         and index 1 tracks accessible URLs.
-        accessible_data (list): A shared list to store the accessible URL data (results).
-    """
-    progress[0] += 1
-    if result:
-        accessible_data.append(result)
-        progress[1] += 1
-    if progress[0] % 100 == 0:
-        print(f'URL {progress[0]}, Accessible URL {progress[1]}')
-
-
-def get_data_parallel(urls, num_processes=4, len=-1):
-    """
-    Fetches HTML content from URLs in parallel using multiprocessing.
-
-    This function processes a list of URLs in parallel, fetching HTML content for each URL using multiple processes.
-    It updates the progress as URLs are processed, and optionally stops after a specified number of URLs (len).
-    The function uses a manager to share data between processes, and it stores the results (accessible URLs) 
-    in a list.
-
-    Args:
-        urls (list): A list of URLs to process.
-        num_processes (int, optional): The number of processes to run in parallel. Defaults to 4.
-        len (int, optional): The number of URLs to process. If len is -1, all URLs are processed. Defaults to -1.
+    Parameters:
+        url_list (list): A list of URLs to fetch.
+        batch_size (int): Number of URLs to process in each batch before writing to the Parquet file. Default is 1000.
+        size (int): Maximum number of accessible URLs to retrieve. Default is -1 (fetch all).
+        filename (str): The name of the Parquet file to write the data to. Default is 'url_html_data.parquet'.
 
     Returns:
-        list: A list of dictionaries containing accessible URLs and their HTML content.
+        None
     """
-    with mp.Manager() as manager:
-        accessible_data = manager.list()
-        progress = manager.list([0, 0])
+    pqwriter = None
+    accessible_data = []
+    total_processed = 0
+    total_fetched = 0
 
-        with mp.Pool(processes=num_processes) as pool:
-            for result in pool.imap_unordered(fetch_url_data, urls):
-                update_progress(result, progress, accessible_data)
-                if len > 0 and progress[0] == len:
-                    break
+    connector = aiohttp.TCPConnector(limit=0)
+    async with aiohttp.ClientSession(connector=connector) as session:
+        for batch_start in range(0, len(url_list), batch_size):
+            if 0 < size <= total_fetched:
+                break
 
-        return list(accessible_data)
+            current_batch = url_list[batch_start:batch_start + batch_size]
+            tasks = [fetch_url_data(session, url) for url in current_batch]
+            results = await asyncio.gather(*tasks)
+            successful_results = [r for r in results if r]
+            accessible_data.extend(successful_results)
+            total_fetched += len(successful_results)
+            total_processed += len(current_batch)
+
+            df = pd.DataFrame(accessible_data)
+            table = pa.Table.from_pandas(df)
+            if not pqwriter and len(accessible_data) > 0:
+                pqwriter = pq.ParquetWriter(filename, table.schema, compression='ZSTD')
+            if len(accessible_data) > 0:
+                pqwriter.write_table(table)
+            accessible_data = []
+
+            batch_number = (batch_start // batch_size) + 1
+            print(f"Processed batch {batch_number}: Total processed: {total_processed}, Accessible URLs: {total_fetched}")
+
+    if pqwriter:
+        pqwriter.close()
+
+    print(f"Build completed. Total URLs processed: {total_processed}, Accessible URLs: {total_fetched}")
