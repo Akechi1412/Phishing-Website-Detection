@@ -166,4 +166,4 @@ test.py
 
 # Lagrge folder and files
 phishing_data.parquet
-legitimate_data.partquet
+legitimate_data.parquet
