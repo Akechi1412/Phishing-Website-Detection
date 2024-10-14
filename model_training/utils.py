@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup, Tag
 from collections import deque
 import networkx as nx
 import matplotlib.pyplot as plt
-import random
 from sklearn.model_selection import train_test_split
 
 async def fetch_url_data(session, url):
@@ -102,7 +101,7 @@ def split_url(url):
     """
     special_chars = '!@#%∧&*() +-=[]{}\\—‘’“,./<>?$:;_~|`'
     words = re.findall(r'\w+|[' + re.escape(special_chars) + ']', url)
-    words = [word for word in words if word.strip()]
+    words = [word.lower() for word in words if word.strip()]
     return words
 
 def build_dictionary(words, vocab_size=10000, filename=''):
@@ -124,7 +123,7 @@ def build_dictionary(words, vocab_size=10000, filename=''):
         - If 'filename' is not an empty string, the dictionary will be saved to a .pkl file.
     """
     word_counts = Counter(words)
-    most_common_words = [word for word, count in word_counts.most_common(vocab_size)]
+    most_common_words = [word for word, count in word_counts.most_common(vocab_size - 1)]
     dictionary = {word: idx + 1 for idx, word in enumerate(most_common_words)}
     
     # If filename is provided, save the dictionary to a file
@@ -145,7 +144,7 @@ def transform_url(url, dictionary, word_size=50):
         word_size (int, optional): The maximum length of the output sequence. Defaults to 50.
 
     Returns:
-        list: A list of indices representing the words in the URL, padded or truncated to 'word_size'.
+        numpy array: A array of indices representing the words in the URL, padded or truncated to 'word_size'.
     
     Notes:
         - Each word in the URL is replaced by its corresponding index from the dictionary.
@@ -154,7 +153,7 @@ def transform_url(url, dictionary, word_size=50):
     """
     words = split_url(url)
     sequence = [dictionary[word] if word in dictionary else 0 for word in words]
-    return (sequence[:word_size] + [0] * word_size)[:word_size]
+    return np.array((sequence[:word_size] + [0] * word_size)[:word_size])
 
 def parse_html(html_document):
     """
@@ -171,20 +170,19 @@ def parse_html(html_document):
         - The returned object can be used to navigate the DOM structure.
     """
     # Parse the HTML document into a DOM Tree
-    dom_tree = BeautifulSoup(html_document, 'html.parser')
+    dom_tree = BeautifulSoup(html_document, 'lxml')
     return dom_tree
-
 
 def create_graph(dom_tree):
     """
-    This function converts a DOM tree into a graph using level-order traversal.
+    This function converts a DOM tree into a graph using level-order traversal
+    and generates an adjacency matrix and feature matrix.
     
-    Args:
-    dom_tree: A DOM tree represented as a root node, where each node has a list of children.
+    Parameters:
+        dom_tree: A DOM tree represented as a root node, where each node has a list of children.
     
     Returns:
-    A NetworkX di-graph representing the structure of the DOM tree.
-    If the tree is empty, it returns an empty di-graph.
+        DiGraph: A NetworkX di-graph representing the DOM structure with integrated features.
     """
     if dom_tree is None:
         return nx.DiGraph()
@@ -192,23 +190,95 @@ def create_graph(dom_tree):
     graph = nx.DiGraph()
     queue = deque([dom_tree])
 
+    # Define a mapping from tag names to integers
+    tag_to_idx = {
+    'html': 1, 'head': 2, 'title': 3, 'body': 4,
+    'article': 5, 'section': 6, 'nav': 7, 'aside': 8, 'header': 9, 
+    'footer': 10, 'h1': 11, 'h2': 12, 'h3': 13, 'h4': 14, 
+    'h5': 15, 'h6': 16, 'p': 17, 'blockquote': 18, 'ol': 19, 
+    'ul': 20, 'li': 21, 'figure': 22, 'figcaption': 23, 'main': 24,
+    'div': 25, 'span': 26, 'a': 27, 'img': 28, 'button': 29, 
+    'form': 30, 'input': 31, 'textarea': 32, 'select': 33, 
+    'option': 34, 'table': 35, 'tr': 36, 'th': 37, 'td': 38,
+    'video': 39, 'audio': 40, 'source': 41, 'canvas': 42,
+    'svg': 43, 'iframe': 44, 'script': 45, 'link': 46, 'meta': 47,
+    'style': 48, 'noscript': 49, 'object': 50, 'embed': 51,
+    'base': 52, 'fieldset': 53, 'legend': 54, 'label': 55,
+    'strong': 56, 'em': 57, 'b': 58, 'i': 59, 'address': 60
+}
+
     while queue:
         node = queue.popleft()
         if not isinstance(node, Tag):
             continue
-        node_name = node.name
-        node_features = {
-            'has_href': 'href' in node.attrs,
-            'has_src': 'src' in node.attrs
-        }
-        graph.add_node(node_name, **node_features)
 
-        for child in node.children:
+        node_name = node.name
+        node_id = id(node)
+        tag_idx = tag_to_idx.get(node_name, 0)
+        features = [
+            tag_idx / len(tag_to_idx) ,
+            1 if 'href' in node.attrs else 0,
+            1 if 'src' in node.attrs else 0
+        ]
+        
+        graph.add_node(node_id, name=node_name, features=features)
+
+        children = [child for child in node.children if isinstance(child, Tag)]
+        for child in children:
             if isinstance(child, Tag):
-                graph.add_edge(node_name, child.name)
+                graph.add_edge(node_id, id(child))
                 queue.append(child)
 
     return graph
+
+def create_graph_adjacency(graph, node_size=100):
+    """
+    Create the adjacency matrix from the graph and limit its size.
+    
+    Parameters:
+        graph: A NetworkX di-graph.
+        node_size: The maximum number of nodes in the adjacency matrix.
+    
+    Returns:
+        An adjacency matrix (numpy array).
+    """
+    if graph.number_of_nodes() == 0:
+        return np.zeros((node_size, node_size))
+
+    adjacency_matrix = nx.to_numpy_array(graph)
+    current_size = adjacency_matrix.shape[0]
+
+    if current_size < node_size:
+        padding = np.zeros((node_size - current_size, node_size - current_size))
+        adjacency_matrix = np.block([[adjacency_matrix, np.zeros((current_size, node_size - current_size))],
+                                      [np.zeros((node_size - current_size, current_size)), padding]])
+    elif current_size > node_size:
+        adjacency_matrix = adjacency_matrix[:node_size:, :node_size:]
+        
+    return adjacency_matrix
+
+def create_graph_feature(graph, node_size):
+    """
+    Create the feature matrix from the graph and limit its size.
+    
+    Parameters:
+        graph: A NetworkX di-graph.
+        node_size: The maximum number of nodes in the feature matrix.
+    
+    Returns:
+        A feature matrix (numpy array).
+    """
+    if graph.number_of_nodes() == 0:
+        return np.zeros((node_size, 3))
+
+    features_list = [data['features'] for _, data in graph.nodes(data=True)]
+    feature_matrix = np.array(features_list, dtype='float64')
+
+    if feature_matrix.shape[0] < node_size:
+        padding = np.zeros((node_size - feature_matrix.shape[0], feature_matrix.shape[1]))
+        feature_matrix = np.vstack((feature_matrix, padding))
+        
+    return feature_matrix[:node_size, :]
 
 def load_data(data_size=50000):
     """
@@ -219,13 +289,13 @@ def load_data(data_size=50000):
     data_size (int): Number of samples to load for each class. Default is 50,000.
 
     Returns:
-    train_data (list): Shuffled training data combining phishing and legitimate samples.
-    val_data (list): Shuffled validation data combining both classes.
-    test_data (list): Shuffled test data combining both classes.
+    data_train (list): Shuffled training data combining phishing and legitimate samples.
+    data_val (list): Shuffled validation data combining both classes.
+    data_test (list): Shuffled test data combining both classes.
 
     Steps:
     1. Load phishing and legitimate data from Parquet files, assign label 1 for phishing, 0 for legitimate.
-    2. Split each dataset into train (70%), val (20%), and test (10%).
+    2. Split each dataset into train (80%), val (10%), and test (10%).
     3. Combine and shuffle phishing and legitimate data for each split.
     """
     # Load phishing data
@@ -240,8 +310,8 @@ def load_data(data_size=50000):
     for item in legitimate_data:
         item['label'] = 0
 
-    train_size = 0.7
-    val_size = 0.2
+    train_size = 0.8
+    val_size = 0.1
     test_size = 0.1
     # Split phishing data
     phishing_train, phishing_temp = train_test_split(phishing_data, 
@@ -259,14 +329,14 @@ def load_data(data_size=50000):
                                                    random_state=42)
 
     # Mix and Shuffle
-    train_data = phishing_train + legitimate_train
-    random.shuffle(train_data)
-    val_data = phishing_val + legitimate_val
-    random.shuffle(val_data)
-    test_data = phishing_test + legitimate_test
-    random.shuffle(test_data)
+    data_train = phishing_train + legitimate_train
+    np.random.shuffle(data_train)
+    data_val = phishing_val + legitimate_val
+    np.random.shuffle(data_val)
+    data_test = phishing_test + legitimate_test
+    np.random.shuffle(data_test)
 
-    return train_data, val_data, test_data
+    return data_train, data_val, data_test
 
 # For testing functions
 if __name__ == '__main__':
@@ -280,14 +350,20 @@ if __name__ == '__main__':
         <body>
             <h1>Title</h1>
             <p>Paragraph</p>
+            <p>Some information: <a href="google.com">Click me!</a></p>
         </body>
     </html>
     '''
     dom_tree = parse_html(html)
     graph = create_graph(dom_tree)
+    adjacency_matrix = create_graph_adjacency(graph, node_size=10)
+    feature_matrix = create_graph_feature(graph, node_size=10)
     print(graph)
+    print(adjacency_matrix)
+    print(feature_matrix)
     plt.figure(figsize=(10, 8))
     pos = nx.spring_layout(graph)
-    nx.draw(graph, pos, with_labels=True, node_size=300, node_color='lightblue', font_size=10, edge_color='gray')
+    labels = nx.get_node_attributes(graph, 'name')
+    nx.draw(graph, pos, labels=labels, with_labels=True, node_size=300, node_color='lightblue', font_size=10, edge_color='gray')
     plt.title("DOM Tree Graph")
     plt.show()
