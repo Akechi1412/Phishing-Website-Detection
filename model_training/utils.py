@@ -134,26 +134,26 @@ def build_dictionary(words, vocab_size=10000, filename=''):
 
     return dictionary
 
-def transform_url(url, dictionary, word_size=50):
+def transform_url(url, dictionary, max_word=50):
     """
     Transforms the given URL into a sequence of indices based on a pre-built dictionary.
 
     Parameters:
         url (str): The input URL to be transformed.
         dictionary (dict): A dictionary mapping words to indices.
-        word_size (int, optional): The maximum length of the output sequence. Defaults to 50.
+        max_word (int, optional): The maximum length of the output sequence. Defaults to 50.
 
     Returns:
-        numpy array: A array of indices representing the words in the URL, padded or truncated to 'word_size'.
+        numpy array: A array of indices representing the words in the URL, padded or truncated to 'max_word'.
     
     Notes:
         - Each word in the URL is replaced by its corresponding index from the dictionary.
         - Words not found in the dictionary are replaced by 0.
-        - The output sequence is truncated or padded with zeros to be exactly 'word_size' in length.
+        - The output sequence is truncated or padded with zeros to be exactly 'max_word' in length.
     """
     words = split_url(url)
     sequence = [dictionary[word] if word in dictionary else 0 for word in words]
-    return np.array((sequence[:word_size] + [0] * word_size)[:word_size])
+    return np.array((sequence[:max_word] + [0] * max_word)[:max_word])
 
 def parse_html(html_document):
     """
@@ -170,7 +170,7 @@ def parse_html(html_document):
         - The returned object can be used to navigate the DOM structure.
     """
     # Parse the HTML document into a DOM Tree
-    dom_tree = BeautifulSoup(html_document, 'lxml')
+    dom_tree = BeautifulSoup(html_document, 'html.parser')
     return dom_tree
 
 def create_graph(dom_tree):
@@ -231,54 +231,54 @@ def create_graph(dom_tree):
 
     return graph
 
-def create_graph_adjacency(graph, node_size=100):
+def create_graph_adjacency(graph, max_node=100):
     """
     Create the adjacency matrix from the graph and limit its size.
     
     Parameters:
         graph: A NetworkX di-graph.
-        node_size: The maximum number of nodes in the adjacency matrix.
+        max_node: The maximum number of nodes in the adjacency matrix.
     
     Returns:
         An adjacency matrix (numpy array).
     """
     if graph.number_of_nodes() == 0:
-        return np.zeros((node_size, node_size))
+        return np.zeros((max_node, max_node))
 
     adjacency_matrix = nx.to_numpy_array(graph)
     current_size = adjacency_matrix.shape[0]
 
-    if current_size < node_size:
-        padding = np.zeros((node_size - current_size, node_size - current_size))
-        adjacency_matrix = np.block([[adjacency_matrix, np.zeros((current_size, node_size - current_size))],
-                                      [np.zeros((node_size - current_size, current_size)), padding]])
-    elif current_size > node_size:
-        adjacency_matrix = adjacency_matrix[:node_size:, :node_size:]
+    if current_size < max_node:
+        padding = np.zeros((max_node - current_size, max_node - current_size))
+        adjacency_matrix = np.block([[adjacency_matrix, np.zeros((current_size, max_node - current_size))],
+                                      [np.zeros((max_node - current_size, current_size)), padding]])
+    elif current_size > max_node:
+        adjacency_matrix = adjacency_matrix[:max_node:, :max_node:]
         
     return adjacency_matrix
 
-def create_graph_feature(graph, node_size):
+def create_graph_feature(graph, max_node):
     """
     Create the feature matrix from the graph and limit its size.
     
     Parameters:
         graph: A NetworkX di-graph.
-        node_size: The maximum number of nodes in the feature matrix.
+        max_node: The maximum number of nodes in the feature matrix.
     
     Returns:
         A feature matrix (numpy array).
     """
     if graph.number_of_nodes() == 0:
-        return np.zeros((node_size, 3))
+        return np.zeros((max_node, 3))
 
     features_list = [data['features'] for _, data in graph.nodes(data=True)]
     feature_matrix = np.array(features_list, dtype='float64')
 
-    if feature_matrix.shape[0] < node_size:
-        padding = np.zeros((node_size - feature_matrix.shape[0], feature_matrix.shape[1]))
+    if feature_matrix.shape[0] < max_node:
+        padding = np.zeros((max_node - feature_matrix.shape[0], feature_matrix.shape[1]))
         feature_matrix = np.vstack((feature_matrix, padding))
         
-    return feature_matrix[:node_size, :]
+    return feature_matrix[:max_node, :]
 
 def load_data(data_size=50000):
     """
@@ -305,7 +305,7 @@ def load_data(data_size=50000):
         item['label'] = 1
  
     # Load legitimate data
-    df = pd.read_parquet('data/phishing_data.parquet')
+    df = pd.read_parquet('data/legitimate_data.parquet')
     legitimate_data = df.head(data_size).to_dict(orient='records')
     for item in legitimate_data:
         item['label'] = 0
@@ -342,28 +342,19 @@ def load_data(data_size=50000):
 if __name__ == '__main__':
     # print(split_url('http://example.com/login.php?id=123'))
     html = '''
-    <!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <title>Simple HTML Document</title>
-        </head>
-        <body>
-            <h1>Title</h1>
-            <p>Paragraph</p>
-            <p>Some information: <a href="google.com">Click me!</a></p>
-        </body>
-    </html>
-    '''
+    
+    
+'''
     dom_tree = parse_html(html)
     graph = create_graph(dom_tree)
-    adjacency_matrix = create_graph_adjacency(graph, node_size=10)
-    feature_matrix = create_graph_feature(graph, node_size=10)
+    adjacency_matrix = create_graph_adjacency(graph, max_node=10)
+    feature_matrix = create_graph_feature(graph, max_node=10)
     print(graph)
     print(adjacency_matrix)
     print(feature_matrix)
     plt.figure(figsize=(10, 8))
     pos = nx.spring_layout(graph)
     labels = nx.get_node_attributes(graph, 'name')
-    nx.draw(graph, pos, labels=labels, with_labels=True, node_size=300, node_color='lightblue', font_size=10, edge_color='gray')
+    nx.draw(graph, pos, labels=labels, with_labels=True, max_node=300, node_color='lightblue', font_size=10, edge_color='gray')
     plt.title("DOM Tree Graph")
     plt.show()
