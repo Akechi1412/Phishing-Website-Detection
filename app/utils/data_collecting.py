@@ -19,13 +19,13 @@ async def fetch_url_data(session, url):
     """
     try:
         url = url.strip()
-        if not url.startswith('http'):
+        if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
         async with session.get(url, timeout=20) as response:
             if response.status == 200:
                 html = await response.text()
                 
-                if not parse_html(html):
+                if not parse_html(html):  
                     return None
 
                 return {'url': str(response.url), 'html': html}
@@ -64,14 +64,14 @@ async def collect_data(url_list, batch_size=1000, size=-1, filename='url_html_da
             total_fetched += len(successful_results)
             total_processed += len(current_batch)
 
-            df = pd.DataFrame(accessible_data)
-            table = pa.Table.from_pandas(df)
-            if not pqwriter and len(accessible_data) > 0:
-                pqwriter = pq.ParquetWriter(filename, table.schema, compression='ZSTD')
-            if pqwriter and len(accessible_data) > 0:
+            if successful_results:
+                df = pd.DataFrame(successful_results)
+                table = pa.Table.from_pandas(df)
+                if not pqwriter:
+                    pqwriter = pq.ParquetWriter(filename, table.schema, compression='ZSTD')
                 pqwriter.write_table(table)
-            accessible_data = []
 
+            accessible_data = []
             batch_number = (batch_start // batch_size) + 1
             print(f"Processed batch {batch_number}: Total processed: {total_processed}, Accessible URLs: {total_fetched}")
 
