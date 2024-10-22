@@ -3,7 +3,6 @@ import aiohttp
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from utils.data_preprocessing import parse_html
 
 async def fetch_url_data(session, url):
     """
@@ -24,9 +23,6 @@ async def fetch_url_data(session, url):
         async with session.get(url, timeout=20) as response:
             if response.status == 200:
                 html = await response.text()
-                
-                if not parse_html(html):  
-                    return None
 
                 return {'url': str(response.url), 'html': html}
     except Exception as e:
