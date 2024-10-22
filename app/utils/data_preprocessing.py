@@ -1,9 +1,5 @@
+import warnings
 import numpy as np
-import asyncio
-import aiohttp
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 import re
 from collections import Counter
 import pickle
@@ -11,78 +7,6 @@ from bs4 import BeautifulSoup, Tag
 from collections import deque
 import networkx as nx
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-
-async def fetch_url_data(session, url):
-    """
-    Asynchronously fetches HTML content from the given URL using aiohttp.
-
-    Parameters:
-        session (aiohttp.ClientSession): The aiohttp session to use for making the request.
-        url (str): The URL from which to fetch the HTML content.
-
-    Returns:
-        dict: A dictionary containing the URL and its corresponding HTML content if the request is successful.
-        None: If the request fails or the URL is not accessible.
-    """
-    try:
-        url = url.strip()
-        if not url.startswith('http'):
-            url = 'http://' + url
-        async with session.get(url, timeout=20) as response:
-            if response.status == 200:
-                html = await response.text()
-                return {'url': str(response.url), 'html': html}
-    except Exception as e:
-        return None
-
-async def build_dataset(url_list, batch_size=1000, size=-1, filename='url_html_data.parquet'):
-    """
-    Asynchronously fetches HTML content from a list of URLs and writes the data to a Parquet file in batches.
-
-    Parameters:
-        url_list (list): A list of URLs to fetch.
-        batch_size (int): Number of URLs to process in each batch before writing to the Parquet file. Default is 1000.
-        size (int): Maximum number of accessible URLs to retrieve. Default is -1 (fetch all).
-        filename (str): The name of the Parquet file to write the data to. Default is 'url_html_data.parquet'.
-
-    Returns:
-        None
-    """
-    pqwriter = None
-    accessible_data = []
-    total_processed = 0
-    total_fetched = 0
-
-    connector = aiohttp.TCPConnector(limit=0)
-    async with aiohttp.ClientSession(connector=connector) as session:
-        for batch_start in range(0, len(url_list), batch_size):
-            if 0 < size <= total_fetched:
-                break
-
-            current_batch = url_list[batch_start:batch_start + batch_size]
-            tasks = [fetch_url_data(session, url) for url in current_batch]
-            results = await asyncio.gather(*tasks)
-            successful_results = [r for r in results if r]
-            accessible_data.extend(successful_results)
-            total_fetched += len(successful_results)
-            total_processed += len(current_batch)
-
-            df = pd.DataFrame(accessible_data)
-            table = pa.Table.from_pandas(df)
-            if not pqwriter and len(accessible_data) > 0:
-                pqwriter = pq.ParquetWriter(filename, table.schema, compression='ZSTD')
-            if pqwriter and len(accessible_data) > 0:
-                pqwriter.write_table(table)
-            accessible_data = []
-
-            batch_number = (batch_start // batch_size) + 1
-            print(f"Processed batch {batch_number}: Total processed: {total_processed}, Accessible URLs: {total_fetched}")
-
-    if pqwriter:
-        pqwriter.close()
-
-    print(f"Build completed. Total URLs processed: {total_processed}, Accessible URLs: {total_fetched}")
 
 def split_url(url):
     """
@@ -169,8 +93,15 @@ def parse_html(html_document):
         - This function uses the BeautifulSoup library to parse the HTML.
         - The returned object can be used to navigate the DOM structure.
     """
-    # Parse the HTML document into a DOM Tree
+    if not html_document.strip():
+        warnings.warn("HTML document is empty.")
+    elif len(html_document) < 20 and ('<' not in html_document and '>' not in html_document):
+        warnings.warn("HTML document resembles a file or URL rather than HTML content.")
+    elif html_document.strip().startswith('<?xml'):
+        warnings.warn("The document appears to be XML. Parsing as HTML may not yield accurate results.")
+
     dom_tree = BeautifulSoup(html_document, 'html.parser')
+    
     return dom_tree
 
 def create_graph(dom_tree):
@@ -280,71 +211,24 @@ def create_graph_feature(graph, max_node):
         
     return feature_matrix[:max_node, :]
 
-def load_data(data_size=50000):
-    """
-    Loads phishing and legitimate data, assigns labels, splits into train, val, and test sets, 
-    and shuffles them.
-
-    Parameters:
-    data_size (int): Number of samples to load for each class. Default is 50,000.
-
-    Returns:
-    data_train (list): Shuffled training data combining phishing and legitimate samples.
-    data_val (list): Shuffled validation data combining both classes.
-    data_test (list): Shuffled test data combining both classes.
-
-    Steps:
-    1. Load phishing and legitimate data from Parquet files, assign label 1 for phishing, 0 for legitimate.
-    2. Split each dataset into train (80%), val (10%), and test (10%).
-    3. Combine and shuffle phishing and legitimate data for each split.
-    """
-    # Load phishing data
-    df = pd.read_parquet('data/phishing_data.parquet')
-    phishing_data = df.head(data_size).to_dict(orient='records')
-    for item in phishing_data:
-        item['label'] = 1
- 
-    # Load legitimate data
-    df = pd.read_parquet('data/legitimate_data.parquet')
-    legitimate_data = df.head(data_size).to_dict(orient='records')
-    for item in legitimate_data:
-        item['label'] = 0
-
-    train_size = 0.8
-    val_size = 0.1
-    test_size = 0.1
-    # Split phishing data
-    phishing_train, phishing_temp = train_test_split(phishing_data, 
-                                                     train_size=train_size, 
-                                                     random_state=42)
-    phishing_val, phishing_test = train_test_split(phishing_temp, 
-                                                   train_size=val_size/(val_size + test_size), 
-                                                   random_state=42)
-    # Split legitimate data
-    legitimate_train, legitimate_temp = train_test_split(legitimate_data, 
-                                                     train_size=train_size, 
-                                                     random_state=42)
-    legitimate_val, legitimate_test = train_test_split(legitimate_temp, 
-                                                   train_size=val_size/(val_size + test_size), 
-                                                   random_state=42)
-
-    # Mix and Shuffle
-    data_train = phishing_train + legitimate_train
-    np.random.shuffle(data_train)
-    data_val = phishing_val + legitimate_val
-    np.random.shuffle(data_val)
-    data_test = phishing_test + legitimate_test
-    np.random.shuffle(data_test)
-
-    return data_train, data_val, data_test
-
 # For testing functions
 if __name__ == '__main__':
     # print(split_url('http://example.com/login.php?id=123'))
     html = '''
-    
-    
-'''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Sample Web Page</title>
+        </head>
+        <body>
+            <h1>Welcome to the Sample Web Page</h1>
+            <p>This is a sample web page.</p>
+            <a href="https://www.example.com">Visit Example.com</a>
+            <script src="main.js"><script>
+        </body>
+        </html>
+        '''
     dom_tree = parse_html(html)
     graph = create_graph(dom_tree)
     adjacency_matrix = create_graph_adjacency(graph, max_node=10)
@@ -355,6 +239,6 @@ if __name__ == '__main__':
     plt.figure(figsize=(10, 8))
     pos = nx.spring_layout(graph)
     labels = nx.get_node_attributes(graph, 'name')
-    nx.draw(graph, pos, labels=labels, with_labels=True, max_node=300, node_color='lightblue', font_size=10, edge_color='gray')
+    nx.draw(graph, pos, labels=labels, with_labels=True, node_color='lightblue', font_size=10, edge_color='gray')
     plt.title("DOM Tree Graph")
     plt.show()
