@@ -1,14 +1,23 @@
 import pickle
+import asyncio
 import aiohttp
+import traceback
+import logging
 import numpy as np
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel
 from tensorflow.keras import models # type: ignore
 from utils.layers import TransformerEncoder, PositionalEmbedding
 from spektral.layers import GCNConv, GlobalSumPool
-from utils.data_collecting import fetch_url_data
 from utils.data_preprocessing import transform_url, parse_html, create_graph
 from utils.data_preprocessing import create_graph_adjacency, create_graph_feature
+
+# Config logging
+logging.basicConfig(
+    filename='app.log',
+    level=logging.ERROR,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 app = FastAPI()
 
@@ -26,24 +35,42 @@ class PredictionInput(BaseModel):
 async def welcome():
     return {'message': 'Welcome!'}
 
+async def is_pdf_website(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.head(url) as response:
+            response.raise_for_status()
+            content_type = response.headers.get('Content-Type', '')
+            return 'application/pdf' in content_type.lower()
+
+async def fetch_url(url, timeout=5):
+    url = url.strip()
+    if not url.startswith(('http://', 'https://')):
+        url = 'http://' + url
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, timeout=timeout) as response:
+            response.raise_for_status()
+            html = await response.text()
+
+            return {'url': str(response.url), 'html': html}
+
 @app.post('/predict')
-async def predict(input_data: PredictionInput):
+async def predict(input_data: PredictionInput, response: Response):
     try:
-        async with aiohttp.ClientSession() as session:
-            result = await fetch_url_data(session, input_data.url, timeout=5)
-            
-            if result is None:
-                return {
-                    'phishing_probability': -1,
-                    'message': "The URL cannot be accessed."
-                }
-            
+        is_pdf = await is_pdf_website(input_data.url)
+        if is_pdf:
+            return {
+                'phishing_probability': 0,
+                'message': 'Successfully.'
+            }
+        
+        result = await fetch_url(input_data.url, timeout=10)
+                    
         max_word = 50
         max_node = 400
         feature_dim = 3
 
         with open('models/dictionary.pkl', 'rb') as f:
-            dictionary = pickle.load(f, encoding='utf-8')
+            dictionary = pickle.load(f)
         url_input = transform_url(result['url'], dictionary=dictionary, max_word=max_word)
         html_dom = parse_html(result['html'])
         html_graph = create_graph(html_dom)
@@ -56,13 +83,29 @@ async def predict(input_data: PredictionInput):
 
         y_pred_prob = model.predict([url_input, adjacency_input, feature_input])
         probability = round(float(y_pred_prob[0]), 2)
-    except Exception as e:
-        return {
-            'phishing_probability': -2,
-            'message': str(e),
-        }
 
-    return {
-        'phishing_probability': probability,
-        'message': 'Successfully.'
+        return {
+            'phishing_probability': probability,
+            'message': 'Successfully.'
+        }
+    except asyncio.TimeoutError as e:
+        response.status_code = 408
+        return {
+            'phishing_probability': -1,
+            'message': 'Timeout error when fetch url.'
+        }
+    except aiohttp.ClientError as e:
+        response.status_code = 400
+        return {
+            'phishing_probability': -1,
+            'message': f'HTTP error occurred: {str(e)}'
+        }
+    except Exception as e:
+        response.status_code = 500
+        error_trace = traceback.format_exc()
+        print(error_trace)
+        logging.error(f"Unexpected error: {error_trace}")
+        return {
+            'phishing_probability': -1,
+            'message': 'An unexpected error occurred.'
         }
