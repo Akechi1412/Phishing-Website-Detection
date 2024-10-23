@@ -30,7 +30,7 @@ async def welcome():
 async def predict(input_data: PredictionInput):
     try:
         async with aiohttp.ClientSession() as session:
-            result = await fetch_url_data(session, input_data.url)
+            result = await fetch_url_data(session, input_data.url, timeout=5)
             
             if result is None:
                 return {

@@ -4,7 +4,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-async def fetch_url_data(session, url):
+async def fetch_url_data(session, url, timeout=20):
     """
     Asynchronously fetches HTML content from the given URL using aiohttp.
 
@@ -20,7 +20,7 @@ async def fetch_url_data(session, url):
         url = url.strip()
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
-        async with session.get(url, timeout=20) as response:
+        async with session.get(url, timeout=timeout) as response:
             if response.status == 200:
                 html = await response.text()
 
