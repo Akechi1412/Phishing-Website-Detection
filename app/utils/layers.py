@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras # type: ignore
 from tensorflow.keras import layers, models # type: ignore
+from spektral.layers import GCNConv
 
 @keras.saving.register_keras_serializable()
 class TransformerEncoder(layers.Layer):
@@ -74,3 +75,13 @@ class PositionalEmbedding(layers.Layer):
             "embed_dim": self.embed_dim,
         })
         return config
+    
+@keras.saving.register_keras_serializable()
+class GCN(layers.Layer):
+    def __init__(self, units, activation=None):
+        super(GCN, self).__init__()
+        self.gcn = GCNConv(units, activation=activation)
+
+    def call(self, inputs):
+        features, adjacency = inputs
+        return self.gcn([features, adjacency])
