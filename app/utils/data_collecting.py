@@ -24,13 +24,6 @@ def is_valid_html(html_document):
     if html_document.strip().startswith('<?xml'):
         return False
 
-    # Capture warnings related to HTML parsing
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        BeautifulSoup(html_document, 'html.parser')
-        if any("html" in str(warn.message).lower() for warn in w):
-            return False
-
     return True
 
 async def fetch_data_from_url(session, url, timeout=20):
@@ -60,28 +53,33 @@ async def fetch_data_from_url(session, url, timeout=20):
     except Exception:
         return None
 
-async def fetch_website_data(session, url, timeout=20, subpage_limit=3, **kwargs):
+async def fetch_website_data(session, url, **kwargs):
     """
     Asynchronously fetches HTML content from the main URL and internal subpages.
 
     Parameters:
         session (aiohttp.ClientSession): The aiohttp session to use for making the request.
         url (str): The URL from which to fetch the HTML content.
-        timeout (int): The number of seconds to wait.
-        subpage_limit (int): The maximum number of internal subpages to fetch.
-        **kwargs: Additional keyword arguments.
+        **kwargs: Additional keyword arguments, including:
+            - timeout (int): The number of seconds to wait. Default is 20 seconds.
+            - subpage_limit (int): The maximum number of internal subpages to fetch. Default is 3.
 
     Returns:
         list: A list of dictionaries, each containing 'url' and 'html' of the main and subpages.
         None: If the request fails or the URL is not accessible.
     """
+    timeout = kwargs.get('timeout', 20)
+    subpage_limit = kwargs.get('subpage_limit', 3)
+
     try:
         main_result = await fetch_data_from_url(session, url, timeout)
         if not main_result:
             return None
 
         results = [main_result]
-        
+        seen_urls = set()
+        seen_urls.add(main_result['url'])
+
         # Parse main page for internal links
         soup = BeautifulSoup(main_result['html'], 'html.parser')
         domain = urlparse(main_result['url']).netloc
@@ -95,9 +93,11 @@ async def fetch_website_data(session, url, timeout=20, subpage_limit=3, **kwargs
         for link in internal_links:
             if len(results) >= subpage_limit + 1:
                 break
-            sub_result = await fetch_data_from_url(session, link, timeout)
-            if sub_result:
-                results.append(sub_result)
+            if link not in seen_urls:
+                sub_result = await fetch_data_from_url(session, link, timeout)
+                if sub_result:
+                    results.append(sub_result)
+                    seen_urls.add(link)
 
         return results
     except Exception:
@@ -111,7 +111,7 @@ async def collect_data(url_list, batch_size=1000, size=-1,
     Parameters:
         url_list (list): List of URLs to fetch.
         batch_size (int): Number of URLs to process in each batch before writing to the Parquet file.
-        size (int): Maximum number of accessible URLs to retrieve. Default is -1 (fetch all).
+        size (int): Maximum number of webpages to retrieve. Default is -1 (fetch all).
         filename (str): Name of the Parquet file to write data to.
         **kwargs: Additional keyword arguments for `fetch_website_data`.
 
@@ -126,7 +126,7 @@ async def collect_data(url_list, batch_size=1000, size=-1,
     connector = aiohttp.TCPConnector(limit=0)
     async with aiohttp.ClientSession(connector=connector) as session:
         for batch_start in range(0, len(url_list), batch_size):
-            if 0 < size <= total_fetched:
+            if 0 < size <= total_webpages:
                 break
 
             current_batch = url_list[batch_start:batch_start + batch_size]
@@ -146,13 +146,11 @@ async def collect_data(url_list, batch_size=1000, size=-1,
                 pqwriter.write_table(table)
 
             batch_number = (batch_start // batch_size) + 1
-            print(f"Processed batch {batch_number}: Total processed URLs: {total_processed}, 
-                  Accessible URLs: {total_fetched}, Total webpages: {total_webpages}")
+            print(f'Processed batch {batch_number}: Total processed URLs: {total_processed}, '
+                  f'Accessible URLs: {total_fetched}, Total webpages: {total_webpages}')
 
     if pqwriter:
         pqwriter.close()
 
-    print(f"Build completed. Total URLs processed: {total_processed}, 
-          Accessible URLs: {total_fetched}, Total webpages: {total_webpages}")
-
-
+    print(f'Build completed. Total URLs processed: {total_processed}, '
+          f'Accessible URLs: {total_fetched}, Total webpages: {total_webpages}')
