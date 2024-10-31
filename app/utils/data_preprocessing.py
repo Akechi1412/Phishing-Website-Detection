@@ -58,26 +58,26 @@ def build_dictionary(words, vocab_size=10000, filename=''):
 
     return dictionary
 
-def transform_url(url, dictionary, max_word=50):
+def vectorize_url(url, dictionary, max_words=50):
     """
     Transforms the given URL into a sequence of indices based on a pre-built dictionary.
 
     Parameters:
         url (str): The input URL to be transformed.
         dictionary (dict): A dictionary mapping words to indices.
-        max_word (int, optional): The maximum length of the output sequence. Defaults to 50.
+        max_words (int, optional): The maximum length of the output sequence. Defaults to 50.
 
     Returns:
-        numpy array: A array of indices representing the words in the URL, padded or truncated to 'max_word'.
+        numpy array: A array of indices representing the words in the URL, padded or truncated to 'max_words'.
     
     Notes:
         - Each word in the URL is replaced by its corresponding index from the dictionary.
         - Words not found in the dictionary are replaced by 0.
-        - The output sequence is truncated or padded with zeros to be exactly 'max_word' in length.
+        - The output sequence is truncated or padded with zeros to be exactly 'max_words' in length.
     """
     words = split_url(url)
     sequence = [dictionary[word] if word in dictionary else 0 for word in words]
-    return np.array((sequence[:max_word] + [0] * max_word)[:max_word])
+    return np.array((sequence[:max_words] + [0] * max_words)[:max_words])
 
 def parse_html(html_document):
     """
@@ -93,13 +93,6 @@ def parse_html(html_document):
         - This function uses the BeautifulSoup library to parse the HTML.
         - The returned object can be used to navigate the DOM structure.
     """
-    if not html_document.strip():
-        warnings.warn("HTML document is empty.")
-    elif len(html_document) < 20 and ('<' not in html_document and '>' not in html_document):
-        warnings.warn("HTML document resembles a file or URL rather than HTML content.")
-    elif html_document.strip().startswith('<?xml'):
-        warnings.warn("The document appears to be XML. Parsing as HTML may not yield accurate results.")
-
     dom_tree = BeautifulSoup(html_document, 'html.parser')
     
     return dom_tree
@@ -146,10 +139,26 @@ def create_graph(dom_tree):
         node_name = node.name
         node_id = id(node)
         tag_idx = tag_to_idx.get(node_name, 0)
+
+        # Input type feature
+        input_type = 0  # Default for non-input or undefined types
+        if node_name == 'input':
+            input_type = 1 if node.get('type') == 'submit' else input_type
+            input_type = 2 if any('password' in (node.get(attr) or '') 
+                                  for attr in ['type', 'id', 'name']) else input_type
+            input_type = 3 if any('email' in (node.get(attr) or '') 
+                                  for attr in ['type', 'id', 'name']) else input_type
+            input_type = 4 if node.get('type') == 'hidden' else input_type
+
+        # Additional features with normalization within [0, 1]
         features = [
-            tag_idx / len(tag_to_idx) ,
-            1 if 'href' in node.attrs else 0,
-            1 if 'src' in node.attrs else 0
+            tag_idx / len(tag_to_idx),                   # Normalized tag index
+            1 if 'href' in node.attrs else 0,            # Contains link
+            1 if 'src' in node.attrs else 0,             # Contains source
+            1 if 'id' in node.attrs else 0,              # Contains id attribute
+            1 if 'class' in node.attrs else 0,           # Contains class attribute
+            1 if 'onclick' in node.attrs else 0,         # Contains JavaScript onclick
+            input_type / 4                               # Input type
         ]
         
         graph.add_node(node_id, name=node_name, features=features)
@@ -162,54 +171,56 @@ def create_graph(dom_tree):
 
     return graph
 
-def create_graph_adjacency(graph, max_node=100):
+def create_graph_adjacency(graph, max_nodes):
     """
     Create the adjacency matrix from the graph and limit its size.
     
     Parameters:
         graph: A NetworkX di-graph.
-        max_node: The maximum number of nodes in the adjacency matrix.
+        max_nodes: The maximum number of nodes in the adjacency matrix.
     
     Returns:
         An adjacency matrix (numpy array).
     """
     if graph.number_of_nodes() == 0:
-        return np.zeros((max_node, max_node))
+        return np.zeros((max_nodes, max_nodes))
+    
+    selected_nodes = list(graph.nodes())[:max_nodes]
+    subgraph = graph.subgraph(selected_nodes)
+    adjacency_matrix = nx.to_numpy_array(subgraph, nodelist=selected_nodes)
 
-    adjacency_matrix = nx.to_numpy_array(graph)
     current_size = adjacency_matrix.shape[0]
-
-    if current_size < max_node:
-        padding = np.zeros((max_node - current_size, max_node - current_size))
-        adjacency_matrix = np.block([[adjacency_matrix, np.zeros((current_size, max_node - current_size))],
-                                      [np.zeros((max_node - current_size, current_size)), padding]])
-    elif current_size > max_node:
-        adjacency_matrix = adjacency_matrix[:max_node:, :max_node:]
+    if current_size < max_nodes:
+        padding = np.zeros((max_nodes - current_size, max_nodes - current_size))
+        adjacency_matrix = np.block([[adjacency_matrix, np.zeros((current_size, max_nodes - current_size))],
+                                     [np.zeros((max_nodes - current_size, current_size)), padding]])
         
     return adjacency_matrix
 
-def create_graph_feature(graph, max_node):
+def create_graph_feature(graph, max_nodes):
     """
     Create the feature matrix from the graph and limit its size.
     
     Parameters:
         graph: A NetworkX di-graph.
-        max_node: The maximum number of nodes in the feature matrix.
+        max_nodes: The maximum number of nodes in the feature matrix.
     
     Returns:
         A feature matrix (numpy array).
     """
+    feature_dim = 7
     if graph.number_of_nodes() == 0:
-        return np.zeros((max_node, 3))
+        return np.zeros((max_nodes, feature_dim))
 
-    features_list = [data['features'] for _, data in graph.nodes(data=True)]
+    selected_nodes = list(graph.nodes())[:max_nodes]
+    features_list = [graph.nodes[node]['features'] for node in selected_nodes]
     feature_matrix = np.array(features_list, dtype='float64')
 
-    if feature_matrix.shape[0] < max_node:
-        padding = np.zeros((max_node - feature_matrix.shape[0], feature_matrix.shape[1]))
+    if feature_matrix.shape[0] < max_nodes:
+        padding = np.zeros((max_nodes - feature_matrix.shape[0], feature_dim))
         feature_matrix = np.vstack((feature_matrix, padding))
         
-    return feature_matrix[:max_node, :]
+    return feature_matrix
 
 # For testing functions
 if __name__ == '__main__':
@@ -225,14 +236,15 @@ if __name__ == '__main__':
             <h1>Welcome to the Sample Web Page</h1>
             <p>This is a sample web page.</p>
             <a href="https://www.example.com">Visit Example.com</a>
+            <input type="password"/>
             <script src="main.js"><script>
         </body>
         </html>
         '''
     dom_tree = parse_html(html)
     graph = create_graph(dom_tree)
-    adjacency_matrix = create_graph_adjacency(graph, max_node=10)
-    feature_matrix = create_graph_feature(graph, max_node=10)
+    adjacency_matrix = create_graph_adjacency(graph, max_nodes=12)
+    feature_matrix = create_graph_feature(graph, max_nodes=12)
     print(graph)
     print(adjacency_matrix)
     print(feature_matrix)
