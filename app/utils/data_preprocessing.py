@@ -139,26 +139,10 @@ def create_graph(dom_tree):
         node_name = node.name
         node_id = id(node)
         tag_idx = tag_to_idx.get(node_name, 0)
-
-        # Input type feature
-        input_type = 0  # Default for non-input or undefined types
-        if node_name == 'input':
-            input_type = 1 if node.get('type') == 'submit' else input_type
-            input_type = 2 if any('password' in (node.get(attr) or '') 
-                                  for attr in ['type', 'id', 'name']) else input_type
-            input_type = 3 if any('email' in (node.get(attr) or '') 
-                                  for attr in ['type', 'id', 'name']) else input_type
-            input_type = 4 if node.get('type') == 'hidden' else input_type
-
-        # Additional features with normalization within [0, 1]
         features = [
             tag_idx / len(tag_to_idx),                   # Normalized tag index
             1 if 'href' in node.attrs else 0,            # Contains link
             1 if 'src' in node.attrs else 0,             # Contains source
-            1 if 'id' in node.attrs else 0,              # Contains id attribute
-            1 if 'class' in node.attrs else 0,           # Contains class attribute
-            1 if 'onclick' in node.attrs else 0,         # Contains JavaScript onclick
-            input_type / 4                               # Input type
         ]
         
         graph.add_node(node_id, name=node_name, features=features)
@@ -208,13 +192,13 @@ def create_graph_feature(graph, max_nodes):
     Returns:
         A feature matrix (numpy array).
     """
-    feature_dim = 7
+    feature_dim = 3
     if graph.number_of_nodes() == 0:
         return np.zeros((max_nodes, feature_dim))
 
     selected_nodes = list(graph.nodes())[:max_nodes]
     features_list = [graph.nodes[node]['features'] for node in selected_nodes]
-    feature_matrix = np.array(features_list, dtype='float64')
+    feature_matrix = np.array(features_list)
 
     if feature_matrix.shape[0] < max_nodes:
         padding = np.zeros((max_nodes - feature_matrix.shape[0], feature_dim))
