@@ -39,18 +39,15 @@ class PredictionInput(BaseModel):
 async def welcome():
     return {'message': 'Welcome!'}
 
-async def is_pdf_website(url):
-    try:
-        url = url.strip()
-        if not url.startswith(('http://', 'https://')):
-            url = 'http://' + url
-        async with aiohttp.ClientSession() as session:
-            async with session.head(url) as response:
-                response.raise_for_status()
-                content_type = response.headers.get('Content-Type', '')
-                return 'application/pdf' in content_type.lower()
-    except Exception as e:
-        return False
+async def is_pdf_website(url, timeout=5):
+    url = url.strip()
+    if not url.startswith(('http://', 'https://')):
+        url = 'http://' + url
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, timeout=timeout) as response:
+            response.raise_for_status()
+            content_type = response.headers.get('Content-Type', '')
+            return 'application/pdf' in content_type.lower()
 
 async def fetch_url(url, timeout=5):
     url = url.strip()
@@ -65,7 +62,7 @@ async def fetch_url(url, timeout=5):
 @app.post('/predict')
 async def predict(input_data: PredictionInput, response: Response):
     try:
-        is_pdf = await is_pdf_website(input_data.url)
+        is_pdf = await is_pdf_website(input_data.url, timeout=10)
         if is_pdf:
             return {
                 'phishing_probability': 0,
