@@ -1,4 +1,3 @@
-import warnings
 import numpy as np
 import re
 from collections import Counter
@@ -217,10 +216,7 @@ if __name__ == '__main__':
             <title>Sample Web Page</title>
         </head>
         <body>
-            <h1>Welcome to the Sample Web Page</h1>
-            <p>This is a sample web page.</p>
             <a href="https://www.example.com">Visit Example.com</a>
-            <input type="password"/>
             <script src="main.js"><script>
         </body>
         </html>
