@@ -62,14 +62,14 @@ async def fetch_url(url, timeout=5):
 @app.post('/predict')
 async def predict(input_data: PredictionInput, response: Response):
     try:
-        is_pdf = await is_pdf_website(input_data.url, timeout=10)
+        is_pdf = await is_pdf_website(input_data.url, timeout=5)
         if is_pdf:
             return {
                 'phishing_probability': 0,
                 'message': 'Successfully.'
             }
         
-        result = await fetch_url(input_data.url, timeout=10)
+        result = await fetch_url(input_data.url, timeout=5)
                     
         max_words = 50
         max_nodes = 600
