@@ -2,7 +2,7 @@ import { MainLayout } from '../../components/layout';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { phishingApi } from '../../apis';
-import { Loader, ProgressCircle } from '../../components/common';
+import { Button, Loader, ProgressCircle } from '../../components/common';
 
 function HomePage() {
   const [urlInput, setUrlInput] = useState('');
@@ -82,12 +82,7 @@ function HomePage() {
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
               />
-              <button
-                className="px-4 py-2 bg-secondary text-white rounded-lg hover:scale-105 sm:hover:scale-100 hover:shadow-lg transition-transform duration-200 ease-in-out"
-                type="submit"
-              >
-                Kiểm tra
-              </button>
+              <Button title="Kiểm tra" type="submit" isDisable={!urlInput.trim()} />
             </form>
           </div>
           <div>
