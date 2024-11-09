@@ -88,7 +88,7 @@ function HomePage() {
           <div>
             {!loading ? (
               <>
-                <ProgressCircle percentage={phishingProbability * 100} />
+                <ProgressCircle percentage={Math.round(phishingProbability * 100)} />
                 {phishingMessage && (
                   <div className="mt-4 flex justify-center">
                     <p className="text-center px-4 py-2 bg-primary/10 border-l-4 border-primary text-primary font-medium shadow-md rounded-md transition-transform duration-300 ease-in-out transform hover:scale-105">
