@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "PhishDetect",
+  "version": "1.0",
+  "description": "Detects phishing websites and warns users based on a configurable threshold.",
+  "permissions": ["activeTab", "storage", "notifications"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "host_permissions": ["*://*/*"]
+}

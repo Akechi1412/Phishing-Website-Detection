@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet" href="style.css">
+        <title>PhishDetect</title>
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <div id="statusContainer" class="progress-container"></div>
+            <div class="threshold-container">
+                <label class="threshold-label" id="thresholdLabel" for="threshold">
+                    <span>Ngưỡng cảnh báo</span>
+                    <img src="./assets/arrow-right.svg" href="" />
+                </label>
+                <div class="threshold-adjust hidden" id="thresholdAdjust">
+                    <button id="decreaseThreshold">-</button>
+                    <input class="threshold-input" type="number" id="threshold" min="50" max="99" value="50">
+                    <button id="increaseThreshold">+</button>
+                </div>
+            </div>
+            <div class="safecheck-container">
+                <label for="safeCheckbox">
+                    Đánh dấu là an toàn
+                </label>
+                <input id="safeCheckbox" type="checkbox">
+            </div>
+            <div class="learnmore">
+                <p>Kiểm tra các URL khác <a target="_blank" href="https://ashy-sky-09ddfcc00.5.azurestaticapps.net/">tại
+                        đây</a>.</p>
+            </div>
+        </div>
+        <script src="popup.js"></script>
+    </body>
+
+</html>

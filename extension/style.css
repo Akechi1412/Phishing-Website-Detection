@@ -1,0 +1,214 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', serif;
+  font-size: 13px;
+  color: #222;
+}
+
+.wrapper {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.progress-box {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 80px;
+  height: 80px;
+}
+
+.progress-circle {
+  transform: rotate(-90deg);
+}
+
+.progress-bg {
+  stroke: #e5e7eb;
+}
+
+.progress-bar {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.stroke-red {
+  stroke: #f87171;
+}
+
+.stroke-orange {
+  stroke: #fb923c;
+}
+
+.stroke-yellow {
+  stroke: #facc15;
+}
+
+.stroke-green {
+  stroke: #34d399;
+}
+
+.stroke-gray {
+  stroke: #e5e7eb;
+}
+
+.percentage-text {
+  position: absolute;
+  font-size: 18px;
+  font-weight: bold;
+  color: #374151;
+}
+
+.info-box {
+  text-align: center;
+  padding: 4px 8px;
+  background-color: rgba(0, 123, 255, 0.1);
+  border-left: 2px solid #1e374d;
+  color: #1e374d;
+  font-weight: 500;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  transition: transform 0.3s ease-in-out;
+  margin-top: 8px;
+}
+
+.info-box:hover {
+  transform: scale(1.02);
+}
+
+.info-icon {
+  margin-right: 8px;
+}
+
+.threshold-container {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #cfdce6;
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.threshold-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.threshold-label img {
+  width: 14px;
+  height: 14px;
+}
+
+.threshold-adjust {
+  display: flex;
+  margin-top: 6px;
+}
+
+.threshold-adjust.hidden {
+  display: none;
+}
+
+.threshold-input {
+  flex: 1;
+  text-align: center;
+  padding: 4px;
+  border: 1px solid #cfdce6;
+  outline: none;
+  border-radius: 4px;
+  margin: 0 6px;
+}
+
+.threshold-input::-webkit-outer-spin-button,
+.threshold-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.threshold-input:focus {
+  border-color: #5c94c3;
+}
+
+.threshold-adjust button {
+  display: inline-block;
+  border: 0;
+  border-radius: 4px;
+  outline: none;
+  padding: 4px 10px;
+  background: #5c94c3;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.safecheck-container {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #cfdce6;
+  border-radius: 4px;
+  padding: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.learnmore {
+  margin-top: 10px;
+}
+
+.learnmore a {
+  font-style: italic;
+  text-decoration: none;
+  color: #5c94c3;
+  transition: all 1s ease-out;
+}
+
+.learnmore a:hover {
+  text-decoration: underline;
+}
+
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-block;
+  border-top: 4px solid #1e374d;
+  border-right: 4px solid transparent;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+.loader::after {
+  content: '';
+  box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border-bottom: 4px solid #5c94c3;
+  border-left: 4px solid transparent;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

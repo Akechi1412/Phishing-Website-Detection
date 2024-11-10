@@ -5,6 +5,7 @@ import { phishingApi } from '../../apis';
 import { Button, Loader, ProgressCircle } from '../../components/common';
 
 function HomePage() {
+  document.title = 'PhishDetect - Phát hiện trang web lừa đảo';
   const [urlInput, setUrlInput] = useState('');
   const [phishingMessage, setPhishingMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -82,7 +83,7 @@ function HomePage() {
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
               />
-              <Button title="Kiểm tra" type="submit" isDisable={!urlInput.trim()} />
+              <Button title="Kiểm tra" type="submit" isDisable={!urlInput.trim() || loading} />
             </form>
           </div>
           <div>
