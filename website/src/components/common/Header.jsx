@@ -11,9 +11,9 @@ function Header() {
             className="flex flex-col justify-center items-center animate-appear-from-left"
           >
             <img height={80} width={80} src={Logo} alt="PhishDetect" className="w-16 sm:w-12" />
-            <div className="font-bold sm:text-sm">
-              <span className="text-primary">Phish</span>
-              <span className="text-secondary">Detect</span>
+            <div className="font-bold text-sm sm:text-xs">
+              <span className="text-primary">PhishDetect</span>
+              <span className="text-secondary">.net</span>
             </div>
           </Link>
           <nav className="h-full animate-appear-from-right">

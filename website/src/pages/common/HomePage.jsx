@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { phishingApi } from '../../apis';
 import { Button, Loader, ProgressCircle } from '../../components/common';
+import { Helmet } from 'react-helmet';
 
 function HomePage() {
-  document.title = 'PhishDetect - Phát hiện trang web lừa đảo';
   const [urlInput, setUrlInput] = useState('');
   const [phishingMessage, setPhishingMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -53,6 +53,29 @@ function HomePage() {
 
   return (
     <MainLayout>
+      <Helmet>
+        <title>PhishDetect.net - Công cụ phát hiện trang web lừa đảo</title>
+        <meta
+          name="description"
+          content="PhishDetect.net giúp bạn kiểm tra và bảo vệ khỏi các trang web lừa đảo bằng cách sử dụng công nghệ AI tiên tiến."
+        />
+        <meta name="robots" content="index, follow" />
+        <meta
+          name="keywords"
+          content="phishing, lừa đảo, bảo mật, phát hiện lừa đảo, phát hiện phishing, cảnh báo lừa đảo, cảnh báo phishing, kiểm tra trang web an toàn"
+        />
+        <meta property="og:title" content="PhishDetect.net - Công cụ phát hiện trang web lừa đảo" />
+        <meta
+          property="og:description"
+          content="Phát hiện và cảnh báo người dùng về các trang web lừa đảo tiềm ẩn với công nghệ phát hiện tiên tiến."
+        />
+        <meta
+          property="og:image"
+          content="https://phishdetect.net/assets/phish_detect-CY8N8orp.svg"
+        />
+        <meta property="og:url" content="https://phishdetect.net/" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <div className="py-8 sm:py-6">
         <div className="container px-5 sm:px-4">
           <h1 className="text-3xl sm:text-2xl text-primary font-bold text-center mb-3 animate-appear">
@@ -62,11 +85,11 @@ function HomePage() {
             Lưu ý: Công cụ của chúng tôi chỉ đưa ra dự đoán về khả năng một trang web có phải là lừa
             đảo hay không nhằm cảnh báo sớm cho người dùng mà chưa được xác minh một cách chính
             thức. Để biết thêm chi tiết hãy xem đầy đủ{' '}
-            <Link className="text-secondary hover:underline" to="/">
+            <Link className="text-secondary hover:underline" to="/terms">
               điều khoản
             </Link>{' '}
             và{' '}
-            <Link className="text-secondary hover:underline" to="/">
+            <Link className="text-secondary hover:underline" to="/policy">
               chính sách
             </Link>{' '}
             của chúng tôi.

@@ -1,11 +1,13 @@
 import { Button } from '../../components/common';
 import { EmptyLayout } from '../../components/layout';
+import { Helmet } from 'react-helmet';
 
 function NotFoundPage() {
-  document.title = '404 - Không tìm thấy trang';
-
   return (
     <EmptyLayout>
+      <Helmet>
+        <title>404 - Không tìm thấy trang</title>
+      </Helmet>
       <div className="h-screen flex flex-col justify-center">
         <div className="container px-5 sm:px-4">
           <div className="text-center px-6 py-4">

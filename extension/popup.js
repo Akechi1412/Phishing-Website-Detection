@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     thresholdLabel.addEventListener('click', () => {
       thresholdAdjust.classList.toggle('hidden');
       chrome.storage.sync.get('phishingThreshold', (data) => {
-        currentThreshold = data.phishingThreshold;
+        currentThreshold = data.phishingThreshold || 50;
         if (thresholdAdjust.classList.contains('hidden')) {
           labelText.textContent = `Ngưỡng cảnh báo: ${currentThreshold}`;
           toggleIcon.src = './assets/arrow-right.svg';
@@ -94,18 +94,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     thresholdInput.addEventListener('change', () => {
-      const newThreshold = Math.min(Math.max(thresholdInput.value, 50), 99);
+      const newThreshold = Math.min(Math.max(thresholdInput.value, 0), 100);
       thresholdInput.value = newThreshold;
       chrome.storage.sync.set({ phishingThreshold: newThreshold });
     });
 
     decreaseButton.addEventListener('click', () => {
-      thresholdInput.value = Math.max(parseInt(thresholdInput.value, 10) - 1, 50);
+      thresholdInput.value = Math.max(+thresholdInput.value - 1, 0);
       thresholdInput.dispatchEvent(new Event('change'));
     });
 
     increaseButton.addEventListener('click', () => {
-      thresholdInput.value = Math.min(parseInt(thresholdInput.value, 10) + 1, 99);
+      thresholdInput.value = Math.min(+thresholdInput.value + 1, 100);
       thresholdInput.dispatchEvent(new Event('change'));
     });
   }

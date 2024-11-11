@@ -20,7 +20,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       chrome.storage.sync.get(['safeDomainList', 'phishingThreshold'], (data) => {
         const safeDomainList = data.safeDomainList;
         const domain = new URL(tab.url).hostname;
-        if (safeDomainList.includes(domain)) return;
+        if ((safeDomainList ?? []).includes(domain)) return;
 
         phishingThreshold = data.phishingThreshold || 50;
         if (phishingScore > phishingThreshold) {
