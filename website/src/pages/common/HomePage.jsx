@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { phishingApi } from '../../apis';
 import { Button, Loader, ProgressCircle } from '../../components/common';
-import { Helmet } from 'react-helmet';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 function HomePage() {
   const [urlInput, setUrlInput] = useState('');
@@ -52,96 +52,101 @@ function HomePage() {
   };
 
   return (
-    <MainLayout>
-      <Helmet>
-        <title>PhishDetect.net - Công cụ phát hiện trang web lừa đảo</title>
-        <meta
-          name="description"
-          content="PhishDetect.net giúp bạn kiểm tra và bảo vệ khỏi các trang web lừa đảo bằng cách sử dụng công nghệ AI tiên tiến."
-        />
-        <meta name="robots" content="index, follow" />
-        <meta
-          name="keywords"
-          content="phishing, lừa đảo, bảo mật, phát hiện lừa đảo, phát hiện phishing, cảnh báo lừa đảo, cảnh báo phishing, kiểm tra trang web an toàn"
-        />
-        <meta property="og:title" content="PhishDetect.net - Công cụ phát hiện trang web lừa đảo" />
-        <meta
-          property="og:description"
-          content="Phát hiện và cảnh báo người dùng về các trang web lừa đảo tiềm ẩn với công nghệ phát hiện tiên tiến."
-        />
-        <meta
-          property="og:image"
-          content="https://phishdetect.net/assets/phish_detect-CY8N8orp.svg"
-        />
-        <meta property="og:url" content="https://phishdetect.net/" />
-        <meta property="og:type" content="website" />
-      </Helmet>
-      <div className="py-8 sm:py-6">
-        <div className="container px-5 sm:px-4">
-          <h1 className="text-3xl sm:text-2xl text-primary font-bold text-center mb-3 animate-appear">
-            Phát hiện trang web lừa đảo
-          </h1>
-          <p className="mb-5">
-            Lưu ý: Công cụ của chúng tôi chỉ đưa ra dự đoán về khả năng một trang web có phải là lừa
-            đảo hay không nhằm cảnh báo sớm cho người dùng mà chưa được xác minh một cách chính
-            thức. Để biết thêm chi tiết hãy xem đầy đủ{' '}
-            <Link className="text-secondary hover:underline" to="/terms">
-              điều khoản
-            </Link>{' '}
-            và{' '}
-            <Link className="text-secondary hover:underline" to="/policy">
-              chính sách
-            </Link>{' '}
-            của chúng tôi.
-          </p>
-          <div className="flex justify-center mb-5">
-            <form
-              onSubmit={handleCheckPhishing}
-              className="w-[600px] max-w-full flex space-x-3 sm:space-x-0 sm:space-y-4 sm:flex-col"
-            >
-              <input
-                className="flex-1 outline-none border border-tertiary px-4 py-2 rounded-lg focus:border-secondary transition-all"
-                type="text"
-                placeholder="Nhập URL muốn kiểm tra..."
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-              />
-              <Button title="Kiểm tra" type="submit" isDisable={!urlInput.trim() || loading} />
-            </form>
-          </div>
-          <div>
-            {!loading ? (
-              <>
-                <ProgressCircle percentage={Math.round(phishingProbability * 100)} />
-                {phishingMessage && (
-                  <div className="mt-4 flex justify-center">
-                    <p className="text-center px-4 py-2 bg-primary/10 border-l-4 border-primary text-primary font-medium shadow-md rounded-md transition-transform duration-300 ease-in-out transform hover:scale-105">
-                      <span role="img" aria-label="Info" className="mr-2">
-                        ℹ️
-                      </span>
-                      {phishingMessage}
-                    </p>
-                  </div>
-                )}
+    <HelmetProvider>
+      <MainLayout>
+        <Helmet>
+          <title>PhishDetect.net - Công cụ phát hiện trang web lừa đảo</title>
+          <meta
+            name="description"
+            content="PhishDetect.net giúp bạn kiểm tra và bảo vệ khỏi các trang web lừa đảo bằng cách sử dụng công nghệ AI tiên tiến."
+          />
+          <meta name="robots" content="index, follow" />
+          <meta
+            name="keywords"
+            content="phishing, lừa đảo, bảo mật, phát hiện lừa đảo, phát hiện phishing, cảnh báo lừa đảo, cảnh báo phishing, kiểm tra trang web an toàn"
+          />
+          <meta
+            property="og:title"
+            content="PhishDetect.net - Công cụ phát hiện trang web lừa đảo"
+          />
+          <meta
+            property="og:description"
+            content="Phát hiện và cảnh báo người dùng về các trang web lừa đảo tiềm ẩn với công nghệ phát hiện tiên tiến."
+          />
+          <meta property="og:image" content="https://phishdetect.net/phish_detect.png" />
+          <meta property="og:url" content="https://phishdetect.net/" />
+          <meta property="og:type" content="website" />
+        </Helmet>
+        <div className="py-8 sm:py-6">
+          <div className="container px-5 sm:px-4">
+            <h1 className="text-3xl sm:text-2xl text-primary font-bold text-center mb-3 animate-appear">
+              Phát hiện trang web lừa đảo
+            </h1>
+            <p className="mb-5">
+              Lưu ý: Công cụ của chúng tôi chỉ đưa ra dự đoán về khả năng một trang web có phải là
+              lừa đảo hay không nhằm cảnh báo sớm cho người dùng mà chưa được xác minh một cách
+              chính thức. Để biết thêm chi tiết hãy xem đầy đủ{' '}
+              <Link className="text-secondary hover:underline" to="/terms">
+                điều khoản
+              </Link>{' '}
+              và{' '}
+              <Link className="text-secondary hover:underline" to="/policy">
+                chính sách
+              </Link>{' '}
+              của chúng tôi.
+            </p>
+            <div className="flex justify-center mb-5">
+              <form
+                onSubmit={handleCheckPhishing}
+                className="w-[600px] max-w-full flex space-x-3 sm:space-x-0 sm:space-y-4 sm:flex-col"
+              >
+                <input
+                  className={`flex-1 outline-none border border-tertiary px-4 py-2 rounded-lg focus:border-secondary transition-all${
+                    loading ? ' cursor-not-allowed' : ''
+                  }`}
+                  type="text"
+                  placeholder="Nhập URL muốn kiểm tra..."
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  disabled={loading}
+                />
+                <Button title="Kiểm tra" type="submit" isDisable={!urlInput.trim() || loading} />
+              </form>
+            </div>
+            <div>
+              {!loading ? (
+                <>
+                  <ProgressCircle percentage={Math.round(phishingProbability * 100)} />
+                  {phishingMessage && (
+                    <div className="mt-4 flex justify-center">
+                      <p className="text-center px-4 py-2 bg-primary/10 border-l-4 border-primary text-primary font-medium shadow-md rounded-md transition-transform duration-300 ease-in-out transform hover:scale-105">
+                        <span role="img" aria-label="Info" className="mr-2">
+                          ℹ️
+                        </span>
+                        {phishingMessage}
+                      </p>
+                    </div>
+                  )}
 
-                {errorMessage && (
-                  <div className="mt-4 flex justify-center">
-                    <p className="text-center px-4 py-2 bg-red-100 border-l-4 border-red-500 text-red-500 font-medium shadow-md rounded-md transition-transform duration-300 ease-in-out transform hover:scale-105">
-                      <span role="img" aria-label="Error" className="mr-2">
-                        🚫
-                      </span>
-                      {errorMessage}
-                    </p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <Loader />
-            )}
+                  {errorMessage && (
+                    <div className="mt-4 flex justify-center">
+                      <p className="text-center px-4 py-2 bg-red-100 border-l-4 border-red-500 text-red-500 font-medium shadow-md rounded-md transition-transform duration-300 ease-in-out transform hover:scale-105">
+                        <span role="img" aria-label="Error" className="mr-2">
+                          🚫
+                        </span>
+                        {errorMessage}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Loader />
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </MainLayout>
+      </MainLayout>
+    </HelmetProvider>
   );
 }
 
