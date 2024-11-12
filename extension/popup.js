@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     tab.url.startsWith('file://') ||
     /^http:\/\/192\.168\.\d+\.\d+/.test(tab.url) ||
     /^http:\/\/10\.\d+\.\d+\.\d+/.test(tab.url);
+  const isResource =
+    /\.(jpg|jpeg|png|gif|svg|bmp|webp|mp4|mp3|wav|pdf|doc|docx|ppt|pptx|xls|xlsx)$/i.test(tab.url);
 
   const statusContainer = document.getElementById('statusContainer');
 
@@ -15,6 +17,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span role="img" aria-label="Info" class="info-icon">ℹ️</span>
             <span id="phishingMessage">Bạn đang truy cập trang web nội bộ nên không cần kiểm tra lừa đảo.</span>
         </div>`;
+    return;
+  }
+
+  if (isResource) {
+    statusContainer.innerHTML = `
+    <div class="info-box">
+        <span role="img" aria-label="Info" class="info-icon">ℹ️</span>
+        <span id="phishingMessage">Bạn đang truy cập trang web tài nguyên (ảnh, video,...) nên không cần kiểm tra lừa đảo.</span>
+    </div>`;
     return;
   }
 

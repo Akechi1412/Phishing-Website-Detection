@@ -1,5 +1,17 @@
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
+    const isLocal =
+      tab.url.startsWith('http://localhost') ||
+      tab.url.startsWith('http://127.0.0.1') ||
+      tab.url.startsWith('file://') ||
+      /^http:\/\/192\.168\.\d+\.\d+/.test(tab.url) ||
+      /^http:\/\/10\.\d+\.\d+\.\d+/.test(tab.url);
+    const isResource =
+      /\.(jpg|jpeg|png|gif|svg|bmp|webp|mp4|mp3|wav|pdf|doc|docx|ppt|pptx|xls|xlsx)$/i.test(
+        tab.url
+      );
+    if (isLocal || isResource) return;
+
     try {
       const response = await fetch(
         'https://phishing-model-api-app.icyrock-5c48d03b.southeastasia.azurecontainerapps.io/predict',
