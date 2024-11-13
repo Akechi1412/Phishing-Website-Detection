@@ -35,14 +35,12 @@ jobs:
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}
-          _dockerfilePathKey_: app/Dockerfile
+          dockerfilePath: app/Dockerfile
           registryUrl: ${{ secrets.PHISHINGMODELAPIAPP_REGISTRY_NAME }}.azurecr.io
           registryUsername: ${{ secrets.PHISHINGMODELAPIAPP_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.PHISHINGMODELAPIAPP_REGISTRY_PASSWORD }}
           containerAppName: phishing-model-api-app
           resourceGroup: phishing-model-api-rg
           imageToBuild: default/phishing-model-api-app:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
 
 
