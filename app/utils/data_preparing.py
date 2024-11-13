@@ -33,12 +33,12 @@ def load_data(limit=-1, offset=0, **kwargs):
         raise ValueError("The sum of train_size, val_size, and test_size must equal 1.")
 
     # Load and label phishing data
-    df_phishing = pd.read_parquet('data/phishing_combined_data.parquet')
+    df_phishing = pd.read_parquet('data/phishing_data.parquet')
     df_phishing['label'] = 1
     phishing_data = df_phishing.iloc[offset: offset + limit if limit > 0 else None].to_dict(orient='records')
 
     # Load label legitimate data
-    df_legitimate = pd.read_parquet('data/legitimate_combined_data.parquet')
+    df_legitimate = pd.read_parquet('data/legitimate_data.parquet')
     df_legitimate['label'] = 0
     legitimate_data = df_legitimate.iloc[offset: offset + limit if limit > 0 else None].to_dict(orient='records')
 
