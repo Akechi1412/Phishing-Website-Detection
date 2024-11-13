@@ -7,7 +7,7 @@ on:
     branches: 
       [ main ]
     paths:
-    - '**'
+    - 'app/**'
     - '.github/workflows/phishing-model-api-app-AutoDeployTrigger-0955bcd2-dd27-4920-9202-66b1dae8964d.yml'
 
   # Allow manual trigger 
