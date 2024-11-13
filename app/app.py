@@ -39,16 +39,6 @@ class PredictionInput(BaseModel):
 async def welcome():
     return {'message': 'Welcome!'}
 
-async def is_pdf_website(url, timeout=5):
-    url = url.strip()
-    if not url.startswith(('http://', 'https://')):
-        url = 'http://' + url
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, timeout=timeout) as response:
-            response.raise_for_status()
-            content_type = response.headers.get('Content-Type', '')
-            return 'application/pdf' in content_type.lower()
-
 async def fetch_url(url, timeout=5):
     url = url.strip()
     if not url.startswith(('http://', 'https://')):
@@ -56,20 +46,22 @@ async def fetch_url(url, timeout=5):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, timeout=timeout) as response:
             response.raise_for_status()
-            html = await response.text()
+            html = None
+            content_type = response.headers.get('Content-Type', '')
+            if 'text/html' in content_type.lower():
+                html = await response.text()
+
             return {'url': str(response.url), 'html': html}
 
 @app.post('/predict')
 async def predict(input_data: PredictionInput, response: Response):
-    try:
-        is_pdf = await is_pdf_website(input_data.url, timeout=5)
-        if is_pdf:
-            return {
-                'phishing_probability': 0,
-                'message': 'Successfully.'
-            }
-        
+    try:      
         result = await fetch_url(input_data.url, timeout=5)
+        if not result['html']:
+            return {
+                'phishing_probability': -1,
+                'message': 'Successfully.'
+            } 
                     
         max_words = 50
         max_nodes = 600
