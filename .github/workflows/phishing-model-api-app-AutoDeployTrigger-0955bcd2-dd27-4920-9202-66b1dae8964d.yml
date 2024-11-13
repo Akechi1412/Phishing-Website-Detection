@@ -41,7 +41,7 @@ jobs:
           registryPassword: ${{ secrets.PHISHINGMODELAPIAPP_REGISTRY_PASSWORD }}
           containerAppName: phishing-model-api-app
           resourceGroup: phishing-model-api-rg
-          imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
+          imageToBuild: default/phishing-model-api-app:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
 
