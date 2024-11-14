@@ -18,6 +18,7 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 10px;
+  overflow: hidden;
 }
 
 .heading {
@@ -25,6 +26,15 @@ body {
   color: #1e374d;
   font-size: 22px;
   margin-bottom: 10px;
+}
+
+.url-text {
+  color: #5c94c3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 8px;
+  max-width: 100%;
 }
 
 .progress-container {

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   chrome.action.setBadgeText({ text: '' });
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  displayCurrentUrl(tab.url);
   const isLocal =
     tab.url.startsWith('http://localhost') ||
     tab.url.startsWith('http://127.0.0.1') ||
@@ -61,6 +62,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateThreshold(threshold);
     updateSafeCheckbox(tab.url);
   });
+
+  function displayCurrentUrl(url) {
+    const urlText = document.getElementById('urlText');
+    urlText.textContent = url || '...';
+  }
 
   function displayPhishingScore(phishingScore) {
     statusContainer.innerHTML = `

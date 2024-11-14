@@ -27,7 +27,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       const result = await response.json();
       const phishingScore = Math.round(result.phishing_probability * 100);
       chrome.storage.sync.set({ phishingData: { url: tab.url, score: phishingScore } });
-      chrome.action.setBadgeText({ text: `${phishingScore}` });
+      chrome.action.setBadgeText({ text: `${phishingScore >= 0 ? phishingScore : 'N/A'}` });
       let badgeColor = '#e5e7eb';
       if (phishingScore > 75) {
         badgeColor = '#f87171';
