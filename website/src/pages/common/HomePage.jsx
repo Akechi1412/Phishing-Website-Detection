@@ -32,8 +32,12 @@ function HomePage() {
         );
       } else if (probability > 0.25) {
         setPhishingMessage('Trang web kiểm tra có khả năng là an toàn.');
-      } else {
+      } else if (probability >= 0) {
         setPhishingMessage('Trang web kiểm tra có độ an toàn cao.');
+      } else {
+        setPhishingMessage(
+          'Không xác định do trang web từ URL bạn nhập vào có thể không có định dạng text/html.'
+        );
       }
       setLoading(false);
     } catch (error) {

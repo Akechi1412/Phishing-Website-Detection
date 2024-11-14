@@ -6,12 +6,14 @@ on:
       - main
     paths:
       - 'website/**'
+      - '.github/workflows/azure-static-web-apps-ashy-sky-09ddfcc00.yml'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
     paths:
       - 'website/**'
+      - '.github/workflows/azure-static-web-apps-ashy-sky-09ddfcc00.yml'
 
 jobs:
   build_and_deploy_job:
@@ -37,7 +39,10 @@ jobs:
           output_location: "/dist" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
         env:
-          PD_PHISHING_API_BASE: ${{ secrets.PD_PHISHING_API_BASE}}
+          PD_PHISHING_API_BASE: ${{ secrets.PD_PHISHING_API_BASE }}
+          PD_SEVICE_ID: ${{ secrets.PD_SEVICE_ID }}
+          PD_TEMPLATE_ID: ${{ secrets.PD_TEMPLATE_ID }}
+          PD_PUBLIC_KEY: ${{ secrets.PD_PUBLIC_KEY }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
