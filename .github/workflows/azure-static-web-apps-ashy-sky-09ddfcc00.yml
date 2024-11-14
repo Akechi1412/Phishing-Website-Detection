@@ -39,7 +39,7 @@ jobs:
           output_location: "/dist" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
         env:
-          PD_PHISHING_API_BASE: https://phishing-model-api-app.lemonforest-e8641975.southeastasia.azurecontainerapps.io
+          PD_PHISHING_API_BASE: ${{ secrets.PD_PHISHING_API_BASE }}
           PD_SEVICE_ID: ${{ secrets.PD_SEVICE_ID }}
           PD_TEMPLATE_ID: ${{ secrets.PD_TEMPLATE_ID }}
           PD_PUBLIC_KEY: ${{ secrets.PD_PUBLIC_KEY }}
