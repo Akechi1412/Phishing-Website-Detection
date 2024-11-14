@@ -40,6 +40,9 @@ jobs:
           ###### End of Repository/Build Configurations ######
         env:
           PD_PHISHING_API_BASE: https://phishing-model-api-app.lemonforest-e8641975.southeastasia.azurecontainerapps.io
+          PD_SEVICE_ID: ${{ secrets.PD_SEVICE_ID }}
+          PD_TEMPLATE_ID: ${{ secrets.PD_TEMPLATE_ID }}
+          PD_PUBLIC_KEY: ${{ secrets.PD_PUBLIC_KEY }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
