@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "PhishDetect",
+  "name": "PhishDetect.net",
   "version": "1.0",
   "description": "Detects phishing websites and warns users based on a configurable threshold.",
   "permissions": ["activeTab", "storage", "notifications"],

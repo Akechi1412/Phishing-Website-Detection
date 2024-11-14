@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  chrome.action.setBadgeText({ text: '' });
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const isLocal =
     tab.url.startsWith('http://localhost') ||
