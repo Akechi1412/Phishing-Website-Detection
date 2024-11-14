@@ -17,7 +17,7 @@ function Footer() {
             </Link>
           </li>
           <li>
-            <Link className="text-secondary hover:underline" to="/">
+            <Link className="text-secondary hover:underline" to="/contact">
               Liên hệ
             </Link>
           </li>

@@ -1,5 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { HomePage, ExtensionPage, TermsPage, PolicyPage, NotFoundPage } from './pages/common';
+import {
+  HomePage,
+  ExtensionPage,
+  TermsPage,
+  PolicyPage,
+  NotFoundPage,
+  ContactPage,
+} from './pages/common';
 
 function App() {
   return (
@@ -9,6 +16,7 @@ function App() {
         <Route path="/extension" element={<ExtensionPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/policy" element={<PolicyPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

@@ -13,18 +13,17 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (isLocal || isResource) return;
 
     try {
-      const response = await fetch(
-        'https://phishing-model-api-app.icyrock-5c48d03b.southeastasia.azurecontainerapps.io/predict',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: tab.url,
-          }),
-        }
-      );
+      const apiUrl =
+        'https://phishing-model-api-app.lemonforest-e8641975.southeastasia.azurecontainerapps.io/predict';
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: tab.url,
+        }),
+      });
       const result = await response.json();
       const phishingScore = Math.round(result.phishing_probability * 100);
       chrome.storage.sync.set({ phishingData: { url: tab.url, score: phishingScore } });
