@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PhishDetect.net",
   "version": "1.0",
-  "description": "Detects phishing websites and warns users based on a configurable threshold.",
+  "description": "Detects phishing webpages and warns users based on a configurable threshold.",
   "permissions": ["activeTab", "storage", "notifications"],
   "background": {
     "service_worker": "background.js"
@@ -20,5 +20,7 @@
     "48": "assets/icon48.png",
     "128": "assets/icon128.png"
   },
-  "host_permissions": ["*://*/*"]
+  "host_permissions": [
+    "https://phishing-model-api-app.lemonforest-e8641975.southeastasia.azurecontainerapps.io/predict"
+  ]
 }
