@@ -3,8 +3,10 @@ import { Button, Input, Loader, TextArea } from '../../components/common';
 import { MainLayout } from '../../components/layout';
 import Swal from 'sweetalert2';
 import { contactApi } from '../../apis';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 function ContactPage() {
+  const siteKey = import.meta.env.PD_CAPCHA_SITE_KEY;
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [content, setContent] = useState('');
@@ -12,6 +14,8 @@ function ContactPage() {
   const [emailError, setEmailError] = useState('');
   const [contentError, setContentError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaExpired, setCaptchaExpired] = useState(false);
 
   const handleFullNameChange = (event) => {
     setFullName(event.target.value);
@@ -86,6 +90,18 @@ function ContactPage() {
     }
   };
 
+  const handleCaptchaChange = (value) => {
+    if (value) {
+      setCaptchaVerified(true);
+      setCaptchaExpired(false);
+    }
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaVerified(false);
+    setCaptchaExpired(true);
+  };
+
   return (
     <MainLayout>
       <div className="py-8 sm:py-6">
@@ -153,8 +169,28 @@ function ContactPage() {
                     />
                     {contentError && <p className="mt-2 text-red-500">{contentError}</p>}
                   </div>
+                  <div className="flex justify-center mb-5">
+                    <ReCAPTCHA
+                      sitekey={siteKey}
+                      onChange={handleCaptchaChange}
+                      onExpired={handleCaptchaExpired}
+                    />
+                  </div>
                   <div className="flex justify-end">
-                    <Button type="submit" title="Xác nhận" />
+                    <Button
+                      type="submit"
+                      title="Xác nhận"
+                      isDisable={
+                        !fullName ||
+                        !email ||
+                        !content ||
+                        fullNameError ||
+                        emailError ||
+                        contentError ||
+                        !captchaVerified ||
+                        captchaExpired
+                      }
+                    />
                   </div>
                 </>
               ) : (

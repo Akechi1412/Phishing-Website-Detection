@@ -1,22 +1,40 @@
 import { MainLayout } from '../../components/layout';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { phishingApi } from '../../apis';
 import { Button, Loader, ProgressCircle } from '../../components/common';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 function HomePage() {
+  const siteKey = import.meta.env.PD_CAPCHA_SITE_KEY;
   const [urlInput, setUrlInput] = useState('');
   const [phishingMessage, setPhishingMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [phishingProbability, setPhishingProbability] = useState(-1);
   const [loading, setLoading] = useState(false);
+  const [submitCount, setSubmitCount] = useState(0);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaExpired, setCaptchaExpired] = useState(false);
 
   const handleCheckPhishing = async (e) => {
     e.preventDefault();
 
-    if (!urlInput.trim()) return;
-
+    if (showCaptcha) {
+      setShowCaptcha(false);
+      setCaptchaVerified(false);
+      sessionStorage.setItem('submitCount', '0');
+      setSubmitCount(0);
+    } else {
+      if (submitCount >= 2 && !captchaVerified) {
+        setShowCaptcha(true);
+        return;
+      }
+      const newCount = submitCount + 1;
+      sessionStorage.setItem('submitCount', newCount.toString());
+      setSubmitCount(newCount);
+    }
     setPhishingMessage('');
     setErrorMessage('');
     setLoading(true);
@@ -54,6 +72,23 @@ function HomePage() {
       }
     }
   };
+
+  const handleCaptchaChange = (value) => {
+    if (value) {
+      setCaptchaVerified(true);
+      setCaptchaExpired(false);
+    }
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaVerified(false);
+    setCaptchaExpired(true);
+  };
+
+  useEffect(() => {
+    const count = parseInt(sessionStorage.getItem('submitCount')) || 0;
+    setSubmitCount(count);
+  }, []);
 
   return (
     <HelmetProvider>
@@ -113,10 +148,28 @@ function HomePage() {
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   disabled={loading}
+                  name="url"
                 />
-                <Button title="Kiểm tra" type="submit" isDisable={!urlInput.trim() || loading} />
+                <Button
+                  title="Kiểm tra"
+                  type="submit"
+                  isDisable={
+                    !urlInput.trim() ||
+                    loading ||
+                    (showCaptcha && (!captchaVerified || captchaExpired))
+                  }
+                />
               </form>
             </div>
+            {showCaptcha && (
+              <div className="flex justify-center mb-5">
+                <ReCAPTCHA
+                  sitekey={siteKey}
+                  onChange={handleCaptchaChange}
+                  onExpired={handleCaptchaExpired}
+                />
+              </div>
+            )}
             <div>
               {!loading ? (
                 <>

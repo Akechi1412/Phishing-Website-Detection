@@ -14,6 +14,7 @@
     "axios": "^1.7.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-google-recaptcha": "^3.1.0",
     "react-helmet-async": "^2.0.5",
     "react-router-dom": "^6.28.0",
     "sweetalert2": "^11.14.5"
