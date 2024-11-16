@@ -27,7 +27,7 @@ function HomePage() {
       sessionStorage.setItem('submitCount', '0');
       setSubmitCount(0);
     } else {
-      if (submitCount >= 2 && !captchaVerified) {
+      if (submitCount >= 5 && !captchaVerified) {
         setShowCaptcha(true);
         return;
       }
