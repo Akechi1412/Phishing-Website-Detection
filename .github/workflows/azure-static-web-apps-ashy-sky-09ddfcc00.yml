@@ -43,7 +43,7 @@ jobs:
           PD_SEVICE_ID: ${{ secrets.PD_SEVICE_ID }}
           PD_TEMPLATE_ID: ${{ secrets.PD_TEMPLATE_ID }}
           PD_PUBLIC_KEY: ${{ secrets.PD_PUBLIC_KEY }}
-          PD_CAPCHA_SITE_KEY: ${{ PD_CAPCHA_SITE_KEY }}
+          PD_CAPCHA_SITE_KEY: ${{ secrets.PD_CAPCHA_SITE_KEY }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
