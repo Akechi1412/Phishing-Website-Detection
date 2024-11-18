@@ -3,7 +3,7 @@ import { Helmet, HelmetProvider } from 'react-helmet-async';
 import Chrome from '../../assets/chrome.png';
 
 function ExtensionPage() {
-  const chromeExtensionUrl = '/';
+  const chromeExtensionUrl = import.meta.env.PD_CHROME_EXTENSION_URL;
 
   return (
     <HelmetProvider>
