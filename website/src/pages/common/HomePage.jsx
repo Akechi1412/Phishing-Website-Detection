@@ -42,13 +42,13 @@ function HomePage() {
       const data = await phishingApi.predict({ url: urlInput });
       const probability = data.phishing_probability;
       setPhishingProbability(probability);
-      if (probability > 0.75) {
+      if (probability >= 0.75) {
         setPhishingMessage('Trang web kiểm tra có nguy cơ lừa đảo cao. Hãy cẩn thận khi truy cập.');
-      } else if (probability > 0.5) {
+      } else if (probability >= 0.5) {
         setPhishingMessage(
           'Trang web kiểm tra có khả năng là lừa đảo. Hãy chú ý trước khi cung cấp bất kỳ thông tin nhạy cảm nào.'
         );
-      } else if (probability > 0.25) {
+      } else if (probability >= 0.25) {
         setPhishingMessage('Trang web kiểm tra có khả năng là an toàn.');
       } else if (probability >= 0) {
         setPhishingMessage('Trang web kiểm tra có độ an toàn cao.');

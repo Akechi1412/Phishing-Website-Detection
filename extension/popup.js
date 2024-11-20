@@ -166,13 +166,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
     progressCircle.style.strokeDashoffset = progress;
 
-    if (percentage > 75) {
+    if (percentage >= 75) {
       progressCircle.classList.add('stroke-red');
       phishingMessage.textContent = 'Nguy cơ lừa đảo cao.';
-    } else if (percentage > 50) {
+    } else if (percentage >= 50) {
       progressCircle.classList.add('stroke-orange');
       phishingMessage.textContent = 'Có khả năng lừa đảo.';
-    } else if (percentage > 25) {
+    } else if (percentage >= 25) {
       progressCircle.classList.add('stroke-yellow');
       phishingMessage.textContent = 'Có khả năng an toàn.';
     } else if (percentage >= 0) {

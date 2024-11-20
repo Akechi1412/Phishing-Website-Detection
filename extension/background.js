@@ -29,11 +29,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       chrome.storage.sync.set({ phishingData: { url: tab.url, score: phishingScore } });
       chrome.action.setBadgeText({ text: `${phishingScore >= 0 ? phishingScore : 'N/A'}` });
       let badgeColor = '#e5e7eb';
-      if (phishingScore > 75) {
+      if (phishingScore >= 75) {
         badgeColor = '#f87171';
-      } else if (phishingScore > 50) {
+      } else if (phishingScore >= 50) {
         badgeColor = '#fb923c';
-      } else if (phishingScore > 25) {
+      } else if (phishingScore >= 25) {
         badgeColor = '#facc15';
       } else if (phishingScore >= 0) {
         badgeColor = '#34d399';
@@ -49,7 +49,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         }
 
         phishingThreshold = data.phishingThreshold || 50;
-        if (phishingScore > phishingThreshold) {
+        if (phishingScore >= phishingThreshold) {
           chrome.notifications.create({
             type: 'basic',
             iconUrl: 'assets/icon48.png',
