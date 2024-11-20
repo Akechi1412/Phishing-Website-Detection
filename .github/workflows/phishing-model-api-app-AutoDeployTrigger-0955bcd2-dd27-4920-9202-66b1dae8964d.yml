@@ -9,6 +9,10 @@ on:
     paths:
     - 'app/**'
     - '.github/workflows/phishing-model-api-app-AutoDeployTrigger-0955bcd2-dd27-4920-9202-66b1dae8964d.yml'
+    paths-ignore:
+      - 'app/data/**'
+      - 'app/notebooks/**'
+      - 'app/README.md'
 
   # Allow manual trigger 
   workflow_dispatch:      
