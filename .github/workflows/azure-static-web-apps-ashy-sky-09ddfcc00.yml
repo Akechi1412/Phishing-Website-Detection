@@ -15,8 +15,7 @@ on:
     paths:
       - 'website/**'
       - '.github/workflows/azure-static-web-apps-ashy-sky-09ddfcc00.yml'
-    paths-ignore:
-      - 'website/README.md'
+      - '!website/README.md'
 
 jobs:
   build_and_deploy_job:
