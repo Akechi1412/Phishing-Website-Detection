@@ -214,10 +214,11 @@ if __name__ == '__main__':
         <head>
             <meta charset="UTF-8">
             <title>Sample Web Page</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />  
         </head>
         <body>
-            <a href="https://www.example.com">Visit Example.com</a>
-            <script src="main.js"><script>
+            <h1>Sample Title</h1>
+            <p>Sample Paragraph</p>
         </body>
         </html>
         '''
@@ -228,9 +229,10 @@ if __name__ == '__main__':
     print(graph)
     print(adjacency_matrix)
     print(feature_matrix)
-    plt.figure(figsize=(10, 8))
-    pos = nx.spring_layout(graph)
+    plt.figure(figsize=(8, 6))
+    pos = nx.spring_layout(graph, k=1)
     labels = nx.get_node_attributes(graph, 'name')
-    nx.draw(graph, pos, labels=labels, with_labels=True, node_color='lightblue', font_size=10, edge_color='gray')
+    nx.draw(graph, pos, labels=labels, with_labels=True, node_color='lightblue', 
+            font_size=10, edge_color='gray', node_size=1200)
     plt.title("DOM Tree Graph")
     plt.show()
