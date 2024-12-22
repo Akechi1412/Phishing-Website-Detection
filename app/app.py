@@ -1,3 +1,4 @@
+import socket
 import pickle
 import asyncio
 import aiohttp
@@ -12,6 +13,7 @@ from spektral.layers import GCNConv, GlobalSumPool
 from utils.data_preprocessing import vectorize_url, parse_html, create_graph
 from utils.data_preprocessing import create_graph_adjacency, create_graph_feature
 from logging.handlers import RotatingFileHandler
+from fastapi.middleware.cors import CORSMiddleware
 
 handler = RotatingFileHandler(
     'app.log', maxBytes=5*1024*1024, backupCount=5
@@ -23,6 +25,19 @@ logging.basicConfig(
 )
 
 app = FastAPI()
+
+hostname = socket.gethostname()
+local_ip = socket.gethostbyname(hostname)
+
+if local_ip.startswith('127.') \
+   or local_ip.startswith('192.168.') \
+   or hostname == 'localhost':
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_methods=['*'],
+        allow_headers=['*'],
+    )
 
 model = models.load_model(
     'models/best_model.h5',
@@ -50,6 +65,7 @@ async def fetch_url(url, timeout=5):
             content_type = response.headers.get('Content-Type', '')
             if 'text/html' in content_type.lower():
                 html = await response.text()
+            print(response.url)
 
             return {'url': str(response.url), 'html': html}
 
@@ -69,7 +85,9 @@ async def predict(input_data: PredictionInput, response: Response):
 
         with open('models/dictionary.pkl', 'rb') as f:
             dictionary = pickle.load(f)
-        url_input = vectorize_url(result['url'], dictionary=dictionary, max_words=max_words)
+        url_input = vectorize_url(result['url'].strip().rstrip('/'), 
+                                  dictionary=dictionary, 
+                                  max_words=max_words)
         html_dom = parse_html(result['html'])
         html_graph = create_graph(html_dom)
         adjacency_input = create_graph_adjacency(html_graph, max_nodes=max_nodes)
@@ -89,15 +107,15 @@ async def predict(input_data: PredictionInput, response: Response):
     except asyncio.TimeoutError as e:
         response.status_code = 408
         error_message = 'Timeout error when fetching URL.'
-        logging.error(f"{error_message} URL: {input_data.url} - Error: {e}")
+        logging.error(f'{error_message} URL: {input_data.url} - Error: {e}')
         return {
             'phishing_probability': -1,
             'message': error_message
         }
     except aiohttp.ClientError as e:
         response.status_code = 400
-        error_message = f"HTTP error occurred: {str(e)}"
-        logging.error(f"{error_message} URL: {input_data.url} - Error: {e}")
+        error_message = f'HTTP error occurred: {str(e)}'
+        logging.error(f'{error_message} URL: {input_data.url} - Error: {e}')
         return {
             'phishing_probability': -1,
             'message': error_message
@@ -105,7 +123,7 @@ async def predict(input_data: PredictionInput, response: Response):
     except Exception as e:
         response.status_code = 500
         error_trace = traceback.format_exc()
-        logging.error(f"Unexpected error: {error_trace}")
+        logging.error(f'Unexpected error: {error_trace}')
         return {
             'phishing_probability': -1,
             'message': 'An unexpected error occurred.'

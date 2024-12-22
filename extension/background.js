@@ -13,8 +13,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (isLocal || isResource) return;
 
     try {
-      const apiUrl =
-        'https://phishing-model-api-app.lemonforest-e8641975.southeastasia.azurecontainerapps.io/predict';
+      const apiUrl = 'http://localhost:8000/predict';
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
