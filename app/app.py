@@ -85,7 +85,7 @@ async def predict(input_data: PredictionInput, response: Response):
 
         with open('models/dictionary.pkl', 'rb') as f:
             dictionary = pickle.load(f)
-        url_input = vectorize_url(result['url'].strip().rstrip('/'), 
+        url_input = vectorize_url(result['url'], 
                                   dictionary=dictionary, 
                                   max_words=max_words)
         html_dom = parse_html(result['html'])
