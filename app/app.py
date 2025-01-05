@@ -58,6 +58,8 @@ async def fetch_url(url, timeout=5):
     url = url.strip()
     if not url.startswith(('http://', 'https://')):
         url = 'http://' + url
+    elif url.startswith('https://'):
+        url = url.replace('https://', 'http://')
     async with aiohttp.ClientSession() as session:
         async with session.get(url, timeout=timeout) as response:
             response.raise_for_status()
