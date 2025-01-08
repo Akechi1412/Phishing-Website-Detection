@@ -59,6 +59,8 @@ The files used for building and training the model are located in the app/notebo
 
 - training_experiment.ipynb: Contains experiments with varying model parameters.
 
+- openphish_evaluation.ipynb: Contains the process and evaluation results of [OpenPhish dataset](https://openphish.com/phishing_feeds.html).
+
 To rerun these files, open them in Colab with a TPU or GPU and sufficient RAM. These notebooks utilize data and certain functions from the project directory stored on Google Drive. Therefore, follow these steps:
 
 1. Mount Google Drive
